@@ -1,10 +1,10 @@
 
- /******************************************************************************************** 
- 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES. 
- 	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. 
- 	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP. 
- 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md. 
- *********************************************************************************************/ 
+/********************************************************************************************
+ THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES.
+ PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING.
+ INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP.
+ FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md.
+ *********************************************************************************************/
 
 
 "use strict";
@@ -29,7 +29,9 @@ var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
     function RemotePackage() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.isDownloading = false;
+        return _this;
     }
     RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
         var _this = this;
@@ -39,9 +41,15 @@ var RemotePackage = (function (_super) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             }
             else {
-                this.currentFileTransfer = new FileTransfer();
-                var downloadSuccess = function (fileEntry) {
-                    _this.currentFileTransfer = null;
+                this.isDownloading = true;
+                var onFileError_1 = function (fileError, stage) {
+                    var error = new Error("Could not access local package. Stage:" + stage + "Error code: " + fileError.code);
+                    CodePushUtil.invokeErrorCallback(error, errorCallback);
+                    CodePushUtil.logMessage(stage + ":" + fileError);
+                    _this.isDownloading = false;
+                };
+                var onFileReady = function (fileEntry) {
+                    _this.isDownloading = false;
                     fileEntry.file(function (file) {
                         NativeAppInfo.isFailedUpdate(_this.packageHash, function (installFailed) {
                             var localPackage = new LocalPackage();
@@ -58,21 +66,11 @@ var RemotePackage = (function (_super) {
                             successCallback && successCallback(localPackage);
                             Sdk.reportStatusDownload(localPackage, localPackage.deploymentKey);
                         });
-                    }, function (fileError) {
-                        CodePushUtil.invokeErrorCallback(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);
-                    });
+                    }, function (fileError) { return onFileError_1(fileError, "READ_FILE"); });
                 };
-                var downloadError = function (error) {
-                    _this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
-                };
-                this.currentFileTransfer.onprogress = function (progressEvent) {
-                    if (downloadProgress) {
-                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
-                        downloadProgress(dp);
-                    }
-                };
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                var filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
+                var filename = LocalPackage.PackageUpdateFileName;
+                cordova.plugin.http.downloadFile(this.downloadUrl, {}, {}, filedir + filename, onFileReady, onFileError_1);
             }
         }
         catch (e) {
@@ -81,8 +79,8 @@ var RemotePackage = (function (_super) {
     };
     RemotePackage.prototype.abortDownload = function (abortSuccess, abortError) {
         try {
-            if (this.currentFileTransfer) {
-                this.currentFileTransfer.abort();
+            if (this.isDownloading) {
+                this.isDownloading = false;
                 abortSuccess && abortSuccess();
             }
         }
