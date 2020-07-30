@@ -72,7 +72,7 @@ NSString* const LastVersionPreferenceLabelOrAppVersionKey = @"LAST_VERSION_LABEL
     if (HasFailedReport == -1) {
         HasFailedReport = [self getFailedReport] != nil;
     }
-    
+
     return HasFailedReport;
 }
 
@@ -82,7 +82,7 @@ NSString* const LastVersionPreferenceLabelOrAppVersionKey = @"LAST_VERSION_LABEL
     if (!failedReportDict) {
         return nil;
     }
-    
+
     return [[StatusReport alloc] initWithDictionary:failedReportDict];
 }
 

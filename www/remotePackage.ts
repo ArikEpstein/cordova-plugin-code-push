@@ -7,6 +7,7 @@ declare var cordova: Cordova & { plugin: { http: AdvancedHttp.Plugin }};
 
 import LocalPackage = require("./localPackage");
 import Package = require("./package");
+import FileUtil = require("./fileUtil");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
 import Sdk = require("./sdk");
@@ -15,6 +16,24 @@ import Sdk = require("./sdk");
  * Defines a remote package, which represents an update package available for download.
  */
 class RemotePackage extends Package implements IRemotePackage {
+
+    constructor() {
+        super();
+
+        /**
+         * @see https://github.com/microsoft/cordova-plugin-code-push/pull/513#pullrequestreview-449368983
+         */
+        FileUtil.getDataDirectory(LocalPackage.DownloadDir, true, (error: Error, _: DirectoryEntry) => {
+            /*
+             * TODO: errors must be strongly checked, via named subclassing & instanceof
+             * or common (const) enum property of error payload i.e.:
+             *      if error.kind === ErrorKind.PermissionDeniedError
+             */
+            if (error) {
+                CodePushUtil.logError("Can't create directory for download update.", error);
+            }
+        });
+    }
 
     private isDownloading: boolean = false;
 
@@ -75,7 +94,7 @@ class RemotePackage extends Package implements IRemotePackage {
                 cordova.plugin.http.downloadFile(this.downloadUrl, {}, {}, filedir + filename, onFileReady, onFileError);
             }
         } catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
 

@@ -487,6 +487,6 @@ interface DownloadProgress {
  * Defines the result of LocalPackage.handleDeployment execution.
  */
 interface DeploymentResult {
-    deployDir: DirectoryEntry;
-    isDiffUpdate: boolean;
+    deployDir: DirectoryEntry,
+    isDiffUpdate: boolean
 }

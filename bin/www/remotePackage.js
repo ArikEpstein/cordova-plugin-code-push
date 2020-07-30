@@ -1,9 +1,9 @@
 
-/********************************************************************************************
- THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES.
- PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING.
- INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP.
- FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md.
+ /********************************************************************************************
+ 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES.
+ 	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING.
+ 	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP.
+ 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md.
  *********************************************************************************************/
 
 
@@ -23,14 +23,20 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var LocalPackage = require("./localPackage");
 var Package = require("./package");
+var FileUtil = require("./fileUtil");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
 var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
     function RemotePackage() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super.call(this) || this;
         _this.isDownloading = false;
+        FileUtil.getDataDirectory(LocalPackage.DownloadDir, true, function (error, _) {
+            if (error) {
+                CodePushUtil.logError("Can't create directory for download update.", error);
+            }
+        });
         return _this;
     }
     RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
@@ -74,7 +80,7 @@ var RemotePackage = (function (_super) {
             }
         }
         catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     };
     RemotePackage.prototype.abortDownload = function (abortSuccess, abortError) {
